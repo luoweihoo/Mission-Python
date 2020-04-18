@@ -19,6 +19,7 @@ current_room = 31   # Starting room is '31'
 top_left_x = 100
 top_left_y = 150
 
+
 DEMO_OBJECTS = [images.floor, images.pillar, images.soil]
 
 LANDER_SECTOR = random.randint(1, 24)
