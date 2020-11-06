@@ -465,7 +465,7 @@ def game_loop():
        
             
     # If the player is standing somewhere they shouldn't, move them back
-    # Keep the 2 commenets below - you'll need them later
+    # Keep the 2 comments below - you'll need them later
     if room_map[player_y][player_x] not in items_player_may_stand_on: # or hazard_map[player_y][player_x] != 0:
         player_x = old_player_x
         player_y = old_player_y
