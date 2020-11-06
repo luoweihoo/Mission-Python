@@ -5,12 +5,13 @@
 # @Contact :   luoweihoo@yahoo.com
 # @Desc    :   Generate the game map
 
+import pgzrun
 import time, random, math
 
 WIDTH = 800     # window size
 HEIGHT = 800
 
-# Player's data
+# PLAYER'S DATA
 PLAYER_NAME = "Sidewing"
 FRIEND1_NAME = "Eagle"
 FRIEND2_NAME = "Falcon"
@@ -58,8 +59,38 @@ player_frame = 0
 player_image = PLAYER[player_direction][player_frame]
 player_offset_x, player_offset_y = 0, 0
 
+PLAYER_SHADOW = {
+     "left": [images.spacesuit_left_shadow, images.spacesuit_left_1_shadow,
+          images.spacesuit_left_2_shadow, images.spacesuit_left_3_shadow,
+          images.spacesuit_left_3_shadow],
+     "right": [images.spacesuit_right_shadow, images.spacesuit_right_1_shadow,
+          images.spacesuit_right_2_shadow, images.spacesuit_right_3_shadow,
+          images.spacesuit_right_3_shadow],
+     "up": [images.spacesuit_back_shadow, images.spacesuit_back_1_shadow,
+          images.spacesuit_back_2_shadow, images.spacesuit_back_3_shadow,
+          images.spacesuit_back_3_shadow],
+     "down": [images.spacesuit_front_shadow, images.spacesuit_front_1_shadow,
+          images.spacesuit_front_2_shadow, images.spacesuit_front_3_shadow,
+          images.spacesuit_front_3_shadow]
+}
 
-# Map
+player_image_shadow = PLAYER_SHADOW["down"][0]
+
+PILLARS = [
+     images.pillar, images.pillar_95, images.pillar_80,
+     images.pillar_60, images.pillar_50
+]
+
+wall_transparentcy_frame = 0
+
+BLACK = (0, 0, 0)
+BLUE = (0, 155, 255)
+YELLOW = (255, 255, 0)
+WHITE = (255, 255, 255)
+GREEN = (0, 255, 0)
+RED = (128, 0, 0)
+
+# MAP
 
 MAP_WIDTH = 5
 MAP_HEIGHT = 10
@@ -96,13 +127,14 @@ GAME_MAP += [
     [FRIEND2_NAME + "'s sleeping quarters", 9, 11, True, True], # room 47
     ["The pipeworks", 13, 11, True, False], # room 48
     ["The chief scientist's office", 9, 7, True, True], # room 49
-    ["The robot workshop", 9, 11, True, False] # room 5
+    ["The robot workshop", 9, 11, True, False] # room 50
 ]
 
 # Check on the input data of the map above
 assert len(GAME_MAP) - 1 == MAP_SIZE, "Map size and GAME_MAP don't match"
 
-# Objects
+# OBJECTS
+
 # Number of object, [object image, shadow image, description]
 objects = {
     0: [images.floor, None, "The floor is shiny and clear"],
@@ -256,7 +288,8 @@ items_player_may_carry = list(range(53, 82))
 # Numbers below are for floor, pressure pad, soil, toxic floor
 items_player_may_stand_on = items_player_may_carry + [0, 39, 2, 48]
 
-# Scenery
+# SCENERY
+
 # Scenary describes objects that cannot move between rooms
 # Room number: [[object number, y position, x position]...]
 scenery = {
@@ -330,7 +363,7 @@ for room_coordinate in range(0, 13):
 del scenery[21][-1] # Delete last fence panel in Room 21        
 del scenery[25][-1] # Delete last fence panel in Room 25
 
-# Make map
+# MAKE MAP
 
 def get_floor_type():
     if current_room in outdoor_rooms:
@@ -338,7 +371,7 @@ def get_floor_type():
     else:
         return 0    # tiled floor
 
-# Game loop
+# GAME LOOP
 
 def game_loop():
     global player_x, player_y, current_room
@@ -388,6 +421,48 @@ def game_loop():
             player_y += 1
             player_direction = "down"
             player_frame = 1
+
+     # Check for exiting the room
+    if player_x == room_width: # through door on RIGHT
+          # clock.unschedule(hazard_move)
+          current_room += 1
+          generate_map()
+          player_x = 0   # enter at left
+          player_y = int(room_height / 2)    # enter at door
+          player_frame = 0
+          #start_room()
+          return
+     
+    if player_x == -1:  # through door on LEFT
+          # clock.unschedule(hazard_move)
+          current_room -= 1
+          generate_map()
+          player_x = room_width - 1     # enter at right
+          player_y = int(room_height / 2) # enter at door
+          player_frame = 0
+          #start_room()
+          return
+
+    if player_y == room_height: # through door at BOTTOM
+          # clock.unschedule(hazard_move)
+          current_room += MAP_WIDTH
+          generate_map()
+          player_y = 0   # enter at top
+          player_x = int(room_height / 2)    # enter at door
+          player_frame = 0
+          #start_room()
+          return
+
+    if player_y == -1: # through door at TOP
+          # clock.unschedule(hazard_move)
+          current_room -= MAP_WIDTH
+          generate_map()
+          player_y = room_height -1   # enter at bottom
+          player_x = int(room_width / 2)    # enter at door
+          player_frame = 0
+          #start_room()
+          return
+       
             
     # If the player is standing somewhere they shouldn't, move them back
     # Keep the 2 commenets below - you'll need them later
@@ -481,7 +556,7 @@ def generate_map():
             for tile_number in range(1, image_width_in_tiles):
                 room_map[scenery_y][scenery_x + tile_number] = 255
 
-# Explore
+# EXPLORE
 
 def draw():
     global room_height, room_width, room_map
@@ -509,25 +584,9 @@ def draw():
                          top_left_y + (player_y * 30) + (player_offset_y * 30) 
                          - image_to_draw.get_height()))
 
-# def movement():
-#     global current_room
-#     old_room = current_room
+# START
 
-#     if keyboard.left:
-#         current_room -= 1
-#     if keyboard.right:
-#         current_room += 1
-#     if keyboard.up:
-#         current_room -= MAP_WIDTH
-#     if keyboard.down:
-#         current_room += MAP_WIDTH
+clock.schedule_interval(game_loop, 0.03)
+generate_map()
 
-#     if current_room > 50:
-#         current_room = 50
-#     if current_room < 1:
-#         current_room = 1
-
-#     if current_room != old_room:
-#         print("Entering room:" + str(current_room))
-
-# clock.schedule_interval(movement, 0.1)
+pgzrun.go()

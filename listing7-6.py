@@ -382,7 +382,7 @@ def game_loop():
         elif keyboard.up:
             from_player_x = player_x
             from_player_y = player_y
-            player_x -= 1
+            player_y -= 1
             player_direction = "up"
             player_frame = 1
         elif keyboard.down:
